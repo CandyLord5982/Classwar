@@ -258,6 +258,7 @@
         });
 
         socket.on('login_success', (data) => {
+            console.log('Login successful:', data);
             currentRole = data.role;
             currentUser = data.username;
             
@@ -274,9 +275,11 @@
             }
             
             showNotification(`Welcome, ${data.name}!`);
+            showLoginMessage('Login successful!', 'success');
         });
 
         socket.on('login_error', (message) => {
+            console.log('Login error:', message);
             showLoginMessage(message, 'error');
         });
 
@@ -319,12 +322,16 @@
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
             
+            console.log('Attempting login:', username, selectedRole);
+            
             if (!username || !password) {
                 showLoginMessage('Please enter both username and password', 'error');
                 return;
             }
             
             document.getElementById('loginBtn').disabled = true;
+            showLoginMessage('Logging in...', 'info');
+            
             socket.emit('login', { username, password, role: selectedRole });
         }
 
