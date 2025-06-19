@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Leaderboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .role-selection {
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .role-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .role-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .teacher-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .student-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .role-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .main-content {
+            display: flex;
+            min-height: 500px;
+        }
+
+        .leaderboard {
+            flex: 2;
+            padding: 30px;
+        }
+
+        .controls {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 30px;
+            border-left: 1px solid #eee;
+        }
+
+        .leaderboard h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            transform: translateX(5px);
+        }
+
+        .rank {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 20px;
+            min-width: 40px;
+        }
+
+        .rank.first { color: #ffd700; }
+        .rank.second { color: #c0c0c0; }
+        .rank.third { color: #cd7f32; }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .interactions {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .controls h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .control-group h4 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .add-score-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-score-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .add-score-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .teacher-controls button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .reset-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .toggle-btn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .teacher-controls button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .student-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .limit-input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .set-limit-btn {
+            padding: 5px 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #28a745;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .game-inactive {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Real-time Leaderboard</h1>
+            <p>Interactive classroom scoring system</p>
+        </div>
+
+        <div class="status">
+            <span id="connectionStatus">Connecting...</span>
+            <span id="gameStatus">Game Active</span>
+        </div>
+
+        <!-- Role Selection Screen -->
+        <div id="roleSelection" class="role-selection">
+            <h2>Choose Your Role</h2>
+            <input type="text" id="nameInput" placeholder="Enter your name" maxlength="20">
+            <div class="role-buttons">
+                <button class="role-btn teacher-btn" onclick="joinAs('teacher')">
+                    👨‍🏫 Join as Teacher
+                </button>
+                <button class="role-btn student-btn" onclick="joinAs('student')">
+                    👨‍🎓 Join as Student
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Game Interface -->
+        <div id="gameInterface" class="main-content hidden">
+            <div class="leaderboard">
+                <h2>🏆 Leaderboard</h2>
+                <div id="leaderboardList">
+                    <p style="text-align: center; color: #666;">No students joined yet</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <!-- Student Controls -->
+                <div id="studentControls" class="hidden">
+                    <h3>Student Actions</h3>
+                    <div class="control-group">
+                        <h4>Add Score</h4>
+                        <p id="interactionsLeft">Interactions remaining: 5</p>
+                        <button id="addScoreBtn" class="add-score-btn" onclick="addScore()">
+                            ⭐ Add 1 Point
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Teacher Controls -->
+                <div id="teacherControls" class="hidden">
+                    <h3>Teacher Controls</h3>
+                    
+                    <div class="control-group">
+                        <h4>Game Management</h4>
+                        <button class="toggle-btn" onclick="toggleGame()">
+                            <span id="toggleText">⏸️ Pause Game</span>
+                        </button>
+                        <button class="reset-btn" onclick="resetGame()">
+                            🔄 Reset All Scores
+                        </button>
+                    </div>
+
+                    <div class="control-group">
+                        <h4>Manage Students</h4>
+                        <div id="studentList" class="student-list">
+                            <p style="color: #666;">No students yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentRole = null;
+        let currentUser = null;
+
+        // DOM elements
+        const roleSelection = document.getElementById('roleSelection');
+        const gameInterface = document.getElementById('gameInterface');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const gameStatus = document.getElementById('gameStatus');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const studentControls = document.getElementById('studentControls');
+        const teacherControls = document.getElementById('teacherControls');
+        const addScoreBtn = document.getElementById('addScoreBtn');
+        const interactionsLeft = document.getElementById('interactionsLeft');
+        const studentList = document.getElementById('studentList');
+        const toggleText = document.getElementById('toggleText');
+        const notification = document.getElementById('notification');
+
+        // Socket events
+        socket.on('connect', () => {
+            connectionStatus.textContent = '✅ Connected';
+            connectionStatus.style.color = '#28a745';
+        });
+
+        socket.on('disconnect', () => {
+            connectionStatus.textContent = '❌ Disconnected';
+            connectionStatus.style.color = '#dc3545';
+        });
+
+        socket.on('game_state', (state) => {
+            updateLeaderboard(state.leaderboard);
+            updateGameStatus(state.gameActive);
+            
+            if (currentRole === 'teacher') {
+                updateStudentList(state.students);
+            } else if (currentRole === 'student') {
+                updateStudentInteractions(state.students);
+            }
+        });
+
+        socket.on('score_added', (data) => {
+            showNotification(`${data.studentName} added ${data.points} points! New score: ${data.newScore}`);
+        });
+
+        socket.on('error', (message) => {
+            showNotification(message, 'error');
+        });
+
+        // Functions
+        function joinAs(role) {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) {
+                alert('Please enter your name');
+                return;
+            }
+
+            currentRole = role;
+            currentUser = name;
+            
+            socket.emit('join_as', { role, name });
+            
+            roleSelection.classList.add('hidden');
+            gameInterface.classList.remove('hidden');
+            
+            if (role === 'teacher') {
+                teacherControls.classList.remove('hidden');
+            } else {
+                studentControls.classList.remove('hidden');
+            }
+        }
+
+        function addScore() {
+            socket.emit('add_score', { points: 1 });
+        }
+
+        function resetGame() {
+            if (confirm('Are you sure you want to reset all scores?')) {
+                socket.emit('reset_game');
+            }
+        }
+
+        function toggleGame() {
+            socket.emit('toggle_game');
+        }
+
+        function setStudentLimit(studentId, limit) {
+            socket.emit('set_interaction_limit', { studentId, limit: parseInt(limit) });
+        }
+
+        function updateLeaderboard(leaderboard) {
+            if (leaderboard.length === 0) {
+                leaderboardList.innerHTML = '<p style="text-align: center; color: #666;">No students joined yet</p>';
+                return;
+            }
+
+            leaderboardList.innerHTML = leaderboard.map(student => `
+                <div class="leaderboard-item">
+                    <div class="rank ${student.rank === 1 ? 'first' : student.rank === 2 ? 'second' : student.rank === 3 ? 'third' : ''}">
+                        #${student.rank}
+                    </div>
+                    <div class="student-info">
+                        <div class="student-name">${student.name}</div>
+                        <div class="interactions">${student.interactions}/${student.maxInteractions} interactions used</div>
+                    </div>
+                    <div class="score">${student.score}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateGameStatus(active) {
+            gameStatus.textContent = active ? '🟢 Game Active' : '🔴 Game Paused';
+            gameStatus.style.color = active ? '#28a745' : '#dc3545';
+            
+            if (!active) {
+                gameInterface.classList.add('game-inactive');
+            } else {
+                gameInterface.classList.remove('game-inactive');
+            }
+            
+            toggleText.textContent = active ? '⏸️ Pause Game' : '▶️ Resume Game';
+        }
+
+        function updateStudentList(students) {
+            if (students.length === 0) {
+                studentList.innerHTML = '<p style="color: #666;">No students yet</p>';
+                return;
+            }
+
+            studentList.innerHTML = students.map(([id, student]) => `
+                <div class="student-item">
+                    <span>${student.name}</span>
+                    <div>
+                        <input type="number" class="limit-input" value="${student.maxInteractions}" 
+                               id="limit-${id}" min="0" max="50">
+                        <button class="set-limit-btn" onclick="setStudentLimit('${id}', document.getElementById('limit-${id}').value)">
+                            Set
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStudentInteractions(students) {
+            const myData = students.find(([id, student]) => id === socket.id);
+            if (myData) {
+                const [id, student] = myData;
+                const remaining = student.maxInteractions - student.interactions;
+                interactionsLeft.textContent = `Interactions remaining: ${remaining}`;
+                addScoreBtn.disabled = remaining <= 0;
+                
+                if (remaining <= 0) {
+                    addScoreBtn.textContent = '❌ No interactions left';
+                } else {
+                    addScoreBtn.textContent = '⭐ Add 1 Point';
+                }
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? '#dc3545' : '#28a745';
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Enter key support for name input
+        document.getElementById('nameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const roleButtons = document.querySelectorAll('.role-btn');
+                roleButtons[0].focus();
+            }
+        });
+    </script>
+</body>
+</html>
