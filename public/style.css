@@ -1,1 +1,286 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.status {
+    padding: 15px 30px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.role-selection {
+    padding: 30px;
+    text-align: center;
+    background: #f8f9fa;
+}
+
+.role-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.role-btn {
+    padding: 15px 30px;
+    font-size: 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.teacher-btn {
+    background: #28a745;
+    color: white;
+}
+
+.student-btn {
+    background: #007bff;
+    color: white;
+}
+
+.role-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.main-content {
+    display: flex;
+    min-height: 500px;
+}
+
+.leaderboard {
+    flex: 2;
+    padding: 30px;
+}
+
+.controls {
+    flex: 1;
+    background: #f8f9fa;
+    padding: 30px;
+    border-left: 1px solid #eee;
+}
+
+.leaderboard h2 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.leaderboard-item:hover {
+    transform: translateX(5px);
+}
+
+.rank {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+    margin-right: 20px;
+    min-width: 40px;
+}
+
+.rank.first { color: #ffd700; }
+.rank.second { color: #c0c0c0; }
+.rank.third { color: #cd7f32; }
+
+.student-info {
+    flex: 1;
+}
+
+.student-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.interactions {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.score {
+    font-size: 24px;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.controls h3 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.control-group {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.control-group h4 {
+    margin-bottom: 15px;
+    color: #667eea;
+}
+
+.add-score-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.add-score-btn:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.add-score-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.teacher-controls button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.reset-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.toggle-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.teacher-controls button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+.student-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.student-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 5px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.limit-input {
+    width: 60px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.set-limit-btn {
+    padding: 5px 10px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background: #28a745;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transform: translateX(400px);
+    transition: transform 0.3s;
+    z-index: 1000;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.game-inactive {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.hidden {
+    display: none;
+}
+
+input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
