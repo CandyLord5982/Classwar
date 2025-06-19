@@ -22,12 +22,34 @@ const io = socketIo(server, {
   }
 });
 
+// Authentication data - You can modify these
+const AUTH_DATA = {
+  // Teacher credentials
+  teachers: {
+    "teacher123": { password: "teach2024", name: "Mr. Smith" },
+    "admin": { password: "admin123", name: "Admin" }
+  },
+  
+  // Student credentials - Add your students here
+  students: {
+    "student1": { password: "pass1", name: "Alice Johnson" },
+    "student2": { password: "pass2", name: "Bob Wilson" },
+    "student3": { password: "pass3", name: "Carol Davis" },
+    "student4": { password: "pass4", name: "David Brown" },
+    "student5": { password: "pass5", name: "Emma Garcia" },
+    "john123": { password: "john2024", name: "John Smith" },
+    "mary456": { password: "mary2024", name: "Mary Jones" },
+    "alex789": { password: "alex2024", name: "Alex Chen" }
+  }
+};
+
 // Game state
 let gameState = {
-  students: new Map(), // studentId -> {name, score, interactions, maxInteractions}
-  teachers: new Map(), // teacherId -> {name}
+  students: new Map(), // studentId -> {username, name, score, interactions, maxInteractions}
+  teachers: new Map(), // teacherId -> {username, name}
   leaderboard: [],
-  gameActive: true
+  gameActive: true,
+  sessions: new Map() // socketId -> {username, role}
 };
 
 io.on('connection', (socket) => {
@@ -38,38 +60,89 @@ io.on('connection', (socket) => {
     students: Array.from(gameState.students.entries()),
     teachers: Array.from(gameState.teachers.entries()),
     leaderboard: gameState.leaderboard,
-    gameActive: gameState.gameActive
+    gameActive: gameState.gameActive,
+    isAuthenticated: false
   });
   
-  // Handle user joining as teacher or student
-  socket.on('join_as', (data) => {
-    const { role, name } = data;
+  // Handle login attempts
+  socket.on('login', (data) => {
+    const { username, password, role } = data;
+    
+    let isValid = false;
+    let userData = null;
     
     if (role === 'teacher') {
-      gameState.teachers.set(socket.id, { name });
-      console.log(`Teacher ${name} joined`);
+      if (AUTH_DATA.teachers[username] && AUTH_DATA.teachers[username].password === password) {
+        isValid = true;
+        userData = AUTH_DATA.teachers[username];
+      }
     } else if (role === 'student') {
-      gameState.students.set(socket.id, {
-        name,
-        score: 0,
-        interactions: 0,
-        maxInteractions: 5 // Default: 5 interactions per student
-      });
-      updateLeaderboard();
-      console.log(`Student ${name} joined`);
+      if (AUTH_DATA.students[username] && AUTH_DATA.students[username].password === password) {
+        isValid = true;
+        userData = AUTH_DATA.students[username];
+      }
     }
     
-    // Broadcast updated state to all users
-    broadcastGameState();
+    if (isValid) {
+      // Check if user is already logged in
+      const existingSession = Array.from(gameState.sessions.entries())
+        .find(([socketId, session]) => session.username === username);
+      
+      if (existingSession) {
+        socket.emit('login_error', 'This account is already logged in from another device');
+        return;
+      }
+      
+      // Store session
+      gameState.sessions.set(socket.id, { username, role });
+      
+      if (role === 'teacher') {
+        gameState.teachers.set(socket.id, {
+          username,
+          name: userData.name
+        });
+        console.log(`Teacher ${userData.name} (${username}) logged in`);
+      } else {
+        gameState.students.set(socket.id, {
+          username,
+          name: userData.name,
+          score: 0,
+          interactions: 0,
+          maxInteractions: 5
+        });
+        updateLeaderboard();
+        console.log(`Student ${userData.name} (${username}) logged in`);
+      }
+      
+      socket.emit('login_success', {
+        role,
+        username,
+        name: userData.name
+      });
+      
+      broadcastGameState();
+    } else {
+      socket.emit('login_error', 'Invalid username or password');
+    }
   });
+  
+  // Verify authentication for all other actions
+  function requireAuth(requiredRole = null) {
+    const session = gameState.sessions.get(socket.id);
+    if (!session) {
+      socket.emit('error', 'Not authenticated');
+      return null;
+    }
+    if (requiredRole && session.role !== requiredRole) {
+      socket.emit('error', `Only ${requiredRole}s can perform this action`);
+      return null;
+    }
+    return session;
+  }
   
   // Teacher sets interaction limits for students
   socket.on('set_interaction_limit', (data) => {
-    // Verify sender is a teacher
-    if (!gameState.teachers.has(socket.id)) {
-      socket.emit('error', 'Only teachers can set interaction limits');
-      return;
-    }
+    if (!requireAuth('teacher')) return;
     
     const { studentId, limit } = data;
     if (gameState.students.has(studentId)) {
@@ -84,11 +157,7 @@ io.on('connection', (socket) => {
   
   // Teacher resets game
   socket.on('reset_game', () => {
-    // Verify sender is a teacher
-    if (!gameState.teachers.has(socket.id)) {
-      socket.emit('error', 'Only teachers can reset the game');
-      return;
-    }
+    if (!requireAuth('teacher')) return;
     
     // Reset all student scores and interactions
     for (let [studentId, student] of gameState.students) {
@@ -100,16 +169,17 @@ io.on('connection', (socket) => {
     updateLeaderboard();
     console.log('Game reset by teacher');
     broadcastGameState();
+    
+    // Notify all users
+    io.emit('game_reset', 'Game has been reset by teacher');
   });
   
   // Student adds score
   socket.on('add_score', (data) => {
-    const student = gameState.students.get(socket.id);
+    const session = requireAuth('student');
+    if (!session) return;
     
-    if (!student) {
-      socket.emit('error', 'Only students can add scores');
-      return;
-    }
+    const student = gameState.students.get(socket.id);
     
     if (!gameState.gameActive) {
       socket.emit('error', 'Game is not active');
@@ -129,7 +199,7 @@ io.on('connection', (socket) => {
     gameState.students.set(socket.id, student);
     updateLeaderboard();
     
-    console.log(`${student.name} added ${scoreToAdd} points (${student.interactions}/${student.maxInteractions} interactions used)`);
+    console.log(`${student.name} (${student.username}) added ${scoreToAdd} points (${student.interactions}/${student.maxInteractions} interactions used)`);
     
     // Broadcast updated state
     broadcastGameState();
@@ -145,35 +215,70 @@ io.on('connection', (socket) => {
   
   // Toggle game active state (teachers only)
   socket.on('toggle_game', () => {
-    if (!gameState.teachers.has(socket.id)) {
-      socket.emit('error', 'Only teachers can toggle game state');
-      return;
-    }
+    if (!requireAuth('teacher')) return;
     
     gameState.gameActive = !gameState.gameActive;
     console.log(`Game ${gameState.gameActive ? 'activated' : 'paused'} by teacher`);
     broadcastGameState();
+    
+    io.emit('game_status_changed', {
+      active: gameState.gameActive,
+      message: `Game ${gameState.gameActive ? 'resumed' : 'paused'} by teacher`
+    });
+  });
+  
+  // Add new student (teachers only)
+  socket.on('add_student_account', (data) => {
+    if (!requireAuth('teacher')) return;
+    
+    const { username, password, name } = data;
+    
+    if (AUTH_DATA.students[username]) {
+      socket.emit('error', 'Username already exists');
+      return;
+    }
+    
+    AUTH_DATA.students[username] = { password, name };
+    socket.emit('student_added', { username, name });
+    console.log(`Teacher added new student account: ${username} (${name})`);
+  });
+  
+  // Get student accounts (teachers only)
+  socket.on('get_student_accounts', () => {
+    if (!requireAuth('teacher')) return;
+    
+    const accounts = Object.entries(AUTH_DATA.students).map(([username, data]) => ({
+      username,
+      name: data.name,
+      isOnline: Array.from(gameState.students.values()).some(s => s.username === username)
+    }));
+    
+    socket.emit('student_accounts', accounts);
   });
   
   // Handle disconnect
   socket.on('disconnect', () => {
-    const wasTeacher = gameState.teachers.has(socket.id);
-    const wasStudent = gameState.students.has(socket.id);
+    const session = gameState.sessions.get(socket.id);
     
-    if (wasTeacher) {
-      const teacher = gameState.teachers.get(socket.id);
-      console.log(`Teacher ${teacher.name} disconnected`);
-      gameState.teachers.delete(socket.id);
+    if (session) {
+      if (session.role === 'teacher') {
+        const teacher = gameState.teachers.get(socket.id);
+        if (teacher) {
+          console.log(`Teacher ${teacher.name} (${teacher.username}) disconnected`);
+          gameState.teachers.delete(socket.id);
+        }
+      } else if (session.role === 'student') {
+        const student = gameState.students.get(socket.id);
+        if (student) {
+          console.log(`Student ${student.name} (${student.username}) disconnected`);
+          gameState.students.delete(socket.id);
+          updateLeaderboard();
+        }
+      }
+      
+      gameState.sessions.delete(socket.id);
+      broadcastGameState();
     }
-    
-    if (wasStudent) {
-      const student = gameState.students.get(socket.id);
-      console.log(`Student ${student.name} disconnected`);
-      gameState.students.delete(socket.id);
-      updateLeaderboard();
-    }
-    
-    broadcastGameState();
   });
 });
 
@@ -183,6 +288,7 @@ function updateLeaderboard() {
     .map((student, index) => ({
       rank: index + 1,
       name: student.name,
+      username: student.username,
       score: student.score,
       interactions: student.interactions,
       maxInteractions: student.maxInteractions
@@ -201,5 +307,13 @@ function broadcastGameState() {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`🚀 Leaderboard Server running on port ${PORT}`);
-  console.log('📊 Teachers can manage game, students can add scores!');
+  console.log('📊 Secure login system enabled!');
+  console.log('\n👨‍🏫 Teacher accounts:');
+  Object.entries(AUTH_DATA.teachers).forEach(([username, data]) => {
+    console.log(`   ${username} / ${data.password} (${data.name})`);
+  });
+  console.log('\n👨‍🎓 Student accounts:');
+  Object.entries(AUTH_DATA.students).forEach(([username, data]) => {
+    console.log(`   ${username} / ${data.password} (${data.name})`);
+  });
 });
