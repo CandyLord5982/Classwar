@@ -4,7 +4,15 @@ const http = require('http');
 const socketIo = require('socket.io');
 
 const app = express();
-app.use(express.static('public'));
+
+// Serve static files with correct MIME types
+app.use(express.static('public', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
 
 const server = http.createServer(app);
 const io = socketIo(server, {
