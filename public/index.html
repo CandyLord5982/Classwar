@@ -3,9 +3,15 @@
 <head>
     <title>🏆 Simple Leaderboard</title>
     <style>
-        body { font-family: Arial; background: #667eea; padding: 20px; margin: 0; }
+        body { 
+            font-family: Arial; 
+            background: url('https://xpclass.vn/leaderboard/background/background.jpg') no-repeat center center fixed; 
+            background-size: cover;
+            padding: 20px; 
+            margin: 0; 
+        }
         .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; }
-        .header { background: #667eea; color: white; padding: 30px; text-align: center; }
+        .header { background: transparent;  padding: 30px; text-align: center; }
         .status { padding: 15px; background: #f0f0f0; display: flex; justify-content: space-between; font-weight: bold; }
         .main { display: flex; min-height: 400px; }
         .leaderboard { flex: 2; padding: 30px; }
@@ -40,7 +46,7 @@
         .currency-display { display: flex; justify-content: space-between; margin: 10px 0; }
         .currency-item { background: #f8f9fa; padding: 10px; border-radius: 5px; text-align: center; flex: 1; margin: 0 5px; }
         .student-item { display: flex; align-items: center; padding: 20px; margin: 10px 0; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .rank { font-size: 24px; font-weight: bold; color: #667eea; margin-right: 20px; min-width: 50px; }
+        .rank { display: flex; align-items: center; font-size: 18px; font-weight: bold; color: #667eea; min-width: 100px; }
         .rank.first { color: #ffd700; }
         .rank.second { color: #c0c0c0; }
         .rank.third { color: #cd7f32; }
@@ -73,13 +79,32 @@
         .activity-shield { background: #cce7ff; color: #004085; }
         .activity-system { background: #f8f9fa; color: #6c757d; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .avatar-selection { margin: 20px 0; }
+        .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 10px 0; }
+        .avatar-option { padding: 5px; border: 3px solid #ddd; border-radius: 10px; cursor: pointer; transition: all 0.3s; background: white; overflow: hidden; }
+        .avatar-option:hover { transform: scale(1.1); }
+        .avatar-option.selected { border-color: #667eea; box-shadow: 0 0 10px rgba(102, 126, 234, 0.5); }
+        .avatar-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; }
+        .leaderboard-avatar { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
+        .taken-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏆 Simple Leaderboard</h1>
-            <p>Real-time classroom competition</p>
+            <img src="https://xpclass.vn/vocab_marathon/frame/leaderboard.png" alt="Leaderboard" style="max-width: 50%; height: auto;">
         </div>
 
         <div class="status">
@@ -98,6 +123,49 @@
             
             <input type="text" id="username" placeholder="Username">
             <input type="password" id="password" placeholder="Password">
+            
+            <div class="avatar-selection">
+                <h4>Choose Your Avatar:</h4>
+                <div class="avatar-grid" id="avatarGrid">
+                    <div class="avatar-option selected" data-avatar="https://xpclass.vn/leaderboard/team_image/shadow.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/shadow.gif" alt="Avatar 1" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/knuckle.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/knuckle.gif" alt="Avatar 2" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/gumball.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/gumball.gif" alt="Avatar 3" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/minecraft.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/minecraft.gif" alt="Avatar 4" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/gwen.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/gwen.gif" alt="Avatar 5" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/spongebob.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/spongebob.gif" alt="Avatar 6" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/spiderman.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/spiderman.gif" alt="Avatar 7" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/gwen.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/gwen.gif" alt="Avatar 8" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/superman.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/superman.gif" alt="Avatar 9" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/batman.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/batman.gif" alt="Avatar 10" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/tom.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/tom.gif" alt="Avatar 11" class="avatar-img">
+                    </div>
+                    <div class="avatar-option" data-avatar="https://xpclass.vn/leaderboard/team_image/jerry.gif">
+                        <img src="https://xpclass.vn/leaderboard/team_image/jerry.gif" alt="Avatar 12" class="avatar-img">
+                    </div>
+                </div>
+            </div>
+            
             <button class="login-btn" onclick="login()">Login</button>
             
             <div id="loginMessage"></div>
@@ -140,15 +208,30 @@
                         </div>
                     </div>
                     
-                    <button id="scoreBtn" class="score-btn" onclick="addScore()">⭐ Safe +1 Point<br><small>+1 Credit</small></button>
-                    <button id="riskyBtn" class="risky-btn" onclick="riskyScore()">🎲 Risky -1 to +3 Points<br><small>+2 Credits</small></button>
+                    <button id="scoreBtn" class="score-btn" onclick="addScore()">
+                        <img src="https://xpclass.vn/leaderboard/icon/coin.png" alt="Coin" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                        Safe +2 Points<br><small>+1 Credit</small>
+                    </button>
+                    <button id="riskyBtn" class="risky-btn" onclick="riskyScore()">
+                        <img src="https://xpclass.vn/leaderboard/icon/random.png" alt="Random" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                        Risky -1 to +3 Points<br><small>+2 Credits</small>
+                    </button>
                     
                     <div class="powerup-section">
                         <h4>💪 Power-ups Shop</h4>
-                        <button class="powerup-btn" onclick="showStealTargets()" style="background: #e74c3c;">🔪 Steal Points (8💰)</button>
-                        <button class="powerup-btn" onclick="buyPowerup('double_next')" style="background: #f39c12;">⚡ Double Next (6💰)</button>
-                        <button class="powerup-btn" onclick="buyPowerup('shield')" style="background: #27ae60;">🛡️ Shield (10💰)</button>
-                        <button class="powerup-btn" onclick="buyPowerup('random_bonus')" style="background: #9b59b6;">🎁 Random Bonus (5💰)</button>
+                        <button class="powerup-btn" onclick="showStealTargets()" style="background: #e74c3c;">🔪 Steal Points (6💰)</button>
+                        <button class="powerup-btn" onclick="buyPowerup('double_next')" style="background: #f39c12;">
+                            <img src="https://xpclass.vn/leaderboard/icon/x2.svg" alt="Double" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 3px;">
+                            Double Next (6💰)
+                        </button>
+                        <button class="powerup-btn" onclick="buyPowerup('shield')" style="background: #27ae60;">
+                            <img src="https://xpclass.vn/leaderboard/icon/shield.svg" alt="Shield" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 3px;">
+                            Shield (5💰)
+                        </button>
+                        <button class="powerup-btn" onclick="buyPowerup('random_bonus')" style="background: #9b59b6;">
+                            <img src="https://xpclass.vn/leaderboard/icon/secret.svg" alt="Secret" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 3px;">
+                            Random Bonus (5💰)
+                        </button>
                         
                         <div id="stealTargets" class="hidden" style="margin-top: 15px; padding: 15px; background: #ffe6e6; border-radius: 5px; border: 2px solid #e74c3c;">
                             <h5>🔪 Choose Target to Steal From:</h5>
@@ -184,7 +267,7 @@
             </div>
             
             <div class="activity-feed">
-                <h3>📢 Live Activity</h3>
+                <h3>Live Activity</h3>
                 <div id="activityList">
                     <p style="text-align: center; color: #666;">Activity will appear here...</p>
                 </div>
@@ -192,7 +275,6 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         // Activity functions FIRST (before anything else)
@@ -227,6 +309,85 @@
             `).join('');
         }
 
+        // Avatar selection variables
+        let selectedAvatar = 'https://i.pravatar.cc/150?img=1'; // Default avatar
+
+        // Track used avatars on client side
+        let usedAvatarsList = [];
+
+        // Update avatar UI based on used avatars
+        function updateAvatarAvailability() {
+            document.querySelectorAll('.avatar-option').forEach(option => {
+                const avatarUrl = option.dataset.avatar;
+                if (usedAvatarsList.includes(avatarUrl)) {
+                    option.style.opacity = '0.3';
+                    option.style.pointerEvents = 'none';
+                    option.style.filter = 'grayscale(100%)';
+                    
+                    // Add "TAKEN" overlay
+                    if (!option.querySelector('.taken-overlay')) {
+                        const overlay = document.createElement('div');
+                        overlay.className = 'taken-overlay';
+                        overlay.textContent = 'TAKEN';
+                        overlay.style.cssText = `
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background: rgba(220, 53, 69, 0.9);
+                            color: white;
+                            padding: 2px 6px;
+                            border-radius: 3px;
+                            font-size: 10px;
+                            font-weight: bold;
+                        `;
+                        option.style.position = 'relative';
+                        option.appendChild(overlay);
+                    }
+                } else {
+                    option.style.opacity = '1';
+                    option.style.pointerEvents = 'auto';
+                    option.style.filter = 'none';
+                    
+                    // Remove "TAKEN" overlay
+                    const overlay = option.querySelector('.taken-overlay');
+                    if (overlay) {
+                        overlay.remove();
+                    }
+                }
+            });
+        }
+
+        // Avatar selection function
+        function initializeAvatarSelection() {
+            const avatarOptions = document.querySelectorAll('.avatar-option');
+            console.log('🎯 Found avatar options:', avatarOptions.length);
+            
+            avatarOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const avatarUrl = this.dataset.avatar;
+                    
+                    // Check if avatar is taken
+                    if (usedAvatarsList.includes(avatarUrl)) {
+                        alert('This avatar is already taken! Please choose another one.');
+                        return;
+                    }
+                    
+                    console.log('🎯 Avatar clicked:', avatarUrl);
+                    
+                    // Remove selected from all
+                    avatarOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Add selected to clicked one
+                    this.classList.add('selected');
+                    
+                    // Update selectedAvatar
+                    selectedAvatar = avatarUrl;
+                    console.log('🎯 selectedAvatar updated to:', selectedAvatar);
+                });
+            });
+        }
+
         // Initialize socket and variables
         const socket = io();
         let selectedRole = 'student';
@@ -242,10 +403,14 @@
             };
         });
 
+        // Initialize avatar selection when DOM is ready
+        document.addEventListener('DOMContentLoaded', initializeAvatarSelection);
+
         // Socket events
         socket.on('connect', () => {
             document.getElementById('status').textContent = '✅ Connected';
             addActivity('system', '🔗 Connected to server');
+            socket.emit('request_used_avatars'); // Request current used avatars
         });
 
         socket.on('activity_update', (data) => {
@@ -350,16 +515,19 @@
             const targetList = document.getElementById('targetList');
             
             if (targets.length === 0) {
-                targetList.innerHTML = '<p style="color: #666; text-align: center;">No valid targets available!<br><small>Targets need points and no shield</small></p>';
+                targetList.innerHTML = '<p style="color: #666; text-align: center;">No valid targets available!<br><small>Targets need points</small></p>';
                 return;
             }
             
             targetList.innerHTML = targets.map(target => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; margin: 5px 0; background: white; border-radius: 3px; border: 1px solid #ddd;">
-                    <span><strong>${target.name}</strong><br><small>${target.score} points</small></span>
+                    <span>
+                        <strong>${target.name}</strong> ${target.shielded ? '🛡️' : ''}<br>
+                        <small>${target.score} points${target.shielded ? ' (Shielded - will break shield)' : ''}</small>
+                    </span>
                     <button onclick="stealFromTarget('${target.username}', '${target.name}', ${target.score})" 
                             style="padding: 5px 10px; background: #e74c3c; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                        Steal 🔪
+                        ${target.shielded ? 'Break Shield 🛡️💥' : 'Steal 🔪'}
                     </button>
                 </div>
             `).join('');
@@ -370,17 +538,42 @@
             addActivity('system', '💔 Disconnected from server');
         });
 
+        // Add socket listeners for avatar status
+        socket.on('used_avatars', (avatars) => {
+            usedAvatarsList = avatars;
+            updateAvatarAvailability();
+        });
+
+        socket.on('avatar_taken', (avatar) => {
+            if (!usedAvatarsList.includes(avatar)) {
+                usedAvatarsList.push(avatar);
+            }
+            updateAvatarAvailability();
+        });
+
+        socket.on('avatar_released', (avatar) => {
+            usedAvatarsList = usedAvatarsList.filter(a => a !== avatar);
+            updateAvatarAvailability();
+        });
+
         // Game functions
         function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            
+            console.log('🎯 Sending login with avatar:', selectedAvatar);
             
             if (!username || !password) {
                 document.getElementById('loginMessage').innerHTML = '<div class="error">Please enter username and password</div>';
                 return;
             }
             
-            socket.emit('login', { username, password, role: selectedRole });
+            socket.emit('login', { 
+                username: username, 
+                password: password, 
+                role: selectedRole, 
+                avatar: selectedAvatar 
+            });
         }
 
         function logout() {
@@ -441,6 +634,7 @@
             list.innerHTML = students.map(student => `
                 <div class="student-item">
                     <div class="rank ${student.rank === 1 ? 'first' : student.rank === 2 ? 'second' : student.rank === 3 ? 'third' : ''}">
+                        <img src="${student.avatar || 'https://i.pravatar.cc/150?img=1'}" alt="Avatar" class="leaderboard-avatar">
                         #${student.rank}
                     </div>
                     <div class="student-info">
@@ -479,7 +673,10 @@
 
             container.innerHTML = students.map(student => `
                 <div class="online-student">
-                    <span><strong>${student.name}</strong><br>Score: ${student.score} | 💰 ${student.credits || 0} credits</span>
+                    <span>
+                        <img src="${student.avatar || 'https://i.pravatar.cc/150?img=1'}" alt="Avatar" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; vertical-align: middle;">
+                        <strong>${student.name}</strong><br>Score: ${student.score} | 💰 ${student.credits || 0} credits
+                    </span>
                     <div class="limit-control">
                         <span>Limit:</span>
                         <input type="number" class="limit-input" value="${student.maxInteractions}" id="limit-${student.username}" min="1" max="20">
@@ -492,6 +689,7 @@
             const creditControls = document.getElementById('creditControls');
             creditControls.innerHTML = students.map(student => `
                 <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                    <img src="${student.avatar || 'https://i.pravatar.cc/150?img=1'}" alt="Avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 8px; vertical-align: middle;">
                     <strong>${student.name}</strong> (💰 ${student.credits || 0})
                     <div style="margin-top: 5px;">
                         <input type="number" value="${student.credits || 0}" id="credits-${student.username}" min="0" max="100" style="width: 80px; padding: 5px;">
@@ -542,8 +740,18 @@
                         document.getElementById('scoreBtn').innerHTML = '❌ No interactions left';
                         document.getElementById('riskyBtn').innerHTML = '❌ No interactions left';
                     } else {
-                        const safeText = myStudent.doubleNext ? '⭐ Safe +2 Points<br><small>Double Active!</small>' : '⭐ Safe +1 Point<br><small>+1 Credit</small>';
-                        const riskyText = myStudent.doubleNext ? '🎲 Risky -2 to +6 Points<br><small>Double Active!</small>' : '🎲 Risky -1 to +3 Points<br><small>+2 Credits</small>';
+                        const safeText = myStudent.doubleNext ? 
+                            `<img src="https://xpclass.vn/leaderboard/icon/coin.png" alt="Coin" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                            <img src="https://xpclass.vn/leaderboard/icon/x2.svg" alt="Double" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 3px;">
+                            Safe +4 Points<br><small>Double Active!</small>` : 
+                            `<img src="https://xpclass.vn/leaderboard/icon/coin.png" alt="Coin" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                            Safe +2 Points<br><small>+1 Credit</small>`;
+                        const riskyText = myStudent.doubleNext ? 
+                            `<img src="https://xpclass.vn/leaderboard/icon/random.png" alt="Random" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                            <img src="https://xpclass.vn/leaderboard/icon/x2.svg" alt="Double" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 3px;">
+                            Risky -2 to +6 Points<br><small>Double Active!</small>` : 
+                            `<img src="https://xpclass.vn/leaderboard/icon/random.png" alt="Random" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                            Risky -1 to +3 Points<br><small>+2 Credits</small>`;
                         
                         document.getElementById('scoreBtn').innerHTML = safeText;
                         document.getElementById('riskyBtn').innerHTML = riskyText;
