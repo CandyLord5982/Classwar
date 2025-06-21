@@ -8,17 +8,31 @@ app.use(express.static('public'));
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Simple credentials
+// Simple credentials with default avatars
 const ACCOUNTS = {
   teachers: {
-    "teacher123": { password: "teach2024", name: "Teacher" }
+    "teacher123": { password: "teach2024", name: "Teacher", avatar: "https://i.pravatar.cc/150?img=50" }
   },
   students: {
-    "student1": { password: "pass1", name: "Alice Johnson" },
-    "student2": { password: "pass2", name: "Bob Wilson" },
-    "student3": { password: "pass3", name: "Carol Davis" }
+    "student1": { password: "pass1", name: "Alice Johnson", avatar: "https://i.pravatar.cc/150?img=1" },
+    "student2": { password: "pass2", name: "Bob Wilson", avatar: "https://i.pravatar.cc/150?img=2" },
+    "student3": { password: "pass3", name: "Carol Davis", avatar: "https://i.pravatar.cc/150?img=3" }
   }
 };
+
+// Track used avatars
+let usedAvatars = new Set();
+
+// Function to release avatar when student disconnects
+function releaseAvatar(avatar) {
+    if (avatar) {
+        usedAvatars.delete(avatar);
+        console.log(`Released avatar: ${avatar}`);
+        
+        // Broadcast updated available avatars to all clients
+        io.emit('avatar_released', avatar);
+    }
+}
 
 // Simple game state
 let students = new Map(); // socketId -> student data
@@ -36,45 +50,85 @@ io.on('connection', (socket) => {
   
   // Handle login
   socket.on('login', (data) => {
-    const { username, password, role } = data;
+    console.log('🎯 DEBUG - Full data received:', JSON.stringify(data, null, 2));
+    
+    const username = data.username;
+    const password = data.password; 
+    const role = data.role;
+    const avatar = data.avatar;
+    
+    console.log('🎯 DEBUG - Avatar value:', avatar || 'NOT_PROVIDED');
     console.log('Login attempt:', username, role);
     
     if (role === 'teacher' && ACCOUNTS.teachers[username]?.password === password) {
-      teachers.set(socket.id, { username, name: ACCOUNTS.teachers[username].name });
-      socket.emit('login_success', { role: 'teacher', name: ACCOUNTS.teachers[username].name, username });
-      console.log('Teacher logged in:', ACCOUNTS.teachers[username].name);
-      
-      // Broadcast teacher join activity
-      io.emit('activity_update', {
-        type: 'system',
-        message: `👨‍🏫 Teacher ${ACCOUNTS.teachers[username].name} has joined`
-      });
+        const finalAvatar = avatar || ACCOUNTS.teachers[username].avatar;
+        teachers.set(socket.id, { 
+            username, 
+            name: ACCOUNTS.teachers[username].name,
+            avatar: finalAvatar 
+        });
+        socket.emit('login_success', { 
+            role: 'teacher', 
+            name: ACCOUNTS.teachers[username].name, 
+            username,
+            avatar: finalAvatar
+        });
+        console.log('Teacher logged in:', ACCOUNTS.teachers[username].name, 'with avatar:', finalAvatar);
+        
+        io.emit('activity_update', {
+            type: 'system',
+            message: `👨‍🏫 Teacher ${ACCOUNTS.teachers[username].name} has joined`
+        });
     } 
     else if (role === 'student' && ACCOUNTS.students[username]?.password === password) {
-      students.set(socket.id, {
-        username,
-        name: ACCOUNTS.students[username].name,
-        score: 0,
-        interactions: 0,
-        maxInteractions: 5,
-        credits: 10,
-        doubleNext: false,
-        shielded: false,
-        shieldDuration: 0
-      });
-      socket.emit('login_success', { role: 'student', name: ACCOUNTS.students[username].name, username });
-      console.log('Student logged in:', ACCOUNTS.students[username].name);
-      
-      // Broadcast student join activity
-      io.emit('activity_update', {
-        type: 'system',
-        message: `👨‍🎓 ${ACCOUNTS.students[username].name} joined the game`
-      });
-      
-      broadcastUpdate();
+        const requestedAvatar = avatar || ACCOUNTS.students[username].avatar;
+        
+        // Check if avatar is already in use
+        if (usedAvatars.has(requestedAvatar)) {
+            socket.emit('login_error', 'Avatar already in use! Please choose another one.');
+            return;
+        }
+        
+        // Mark avatar as used
+        usedAvatars.add(requestedAvatar);
+        console.log(`Avatar locked: ${requestedAvatar}`);
+        
+        // Broadcast to all clients that this avatar is now taken
+        io.emit('avatar_taken', requestedAvatar);
+        
+        const finalAvatar = requestedAvatar;
+        console.log('🎯 DEBUG - Using final avatar for student:', finalAvatar);
+        
+        students.set(socket.id, {
+            username,
+            name: ACCOUNTS.students[username].name,
+            avatar: finalAvatar,
+            score: 0,
+            interactions: 0,
+            maxInteractions: 5,
+            credits: 10,
+            doubleNext: false,
+            shielded: false,
+            shieldDuration: 0
+        });
+        
+        socket.emit('login_success', { 
+            role: 'student', 
+            name: ACCOUNTS.students[username].name, 
+            username,
+            avatar: finalAvatar
+        });
+        console.log('Student logged in:', ACCOUNTS.students[username].name, 'with avatar:', finalAvatar);
+        
+        io.emit('activity_update', {
+            type: 'system',
+            message: `👨‍🎓 ${ACCOUNTS.students[username].name} joined the game`
+        });
+        
+        broadcastUpdate();
     } 
     else {
-      socket.emit('login_error', 'Invalid credentials');
+        socket.emit('login_error', 'Invalid credentials');
     }
   });
   
@@ -84,10 +138,10 @@ io.on('connection', (socket) => {
     if (!student || !gameActive) return;
     
     if (student.interactions < student.maxInteractions) {
-        let pointsGained = 1;
+        let pointsGained = 2;
         
         if (student.doubleNext) {
-            pointsGained = 2;
+            pointsGained = 4;
             student.doubleNext = false;
             io.emit('activity_update', {
                 type: 'powerup',
@@ -96,7 +150,7 @@ io.on('connection', (socket) => {
         } else {
             io.emit('activity_update', {
                 type: 'safe',
-                message: `✅ ${student.name} safely earned +${pointsGained} point`
+                message: `✅ ${student.name} safely earned +${pointsGained} points`
             });
         }
         
@@ -121,37 +175,91 @@ io.on('connection', (socket) => {
     if (!student || !gameActive) return;
     
     if (student.interactions < student.maxInteractions) {
-        let randomPoints = Math.floor(Math.random() * 5) - 1;
-        let originalPoints = randomPoints;
+        let randomPoints = 0;
+        let originalPoints = 0;
         
-        if (student.doubleNext && randomPoints > 0) {
-            randomPoints *= 2;
-            student.doubleNext = false;
+        // New probability distribution
+        const random = Math.random();
+        if (random < 0.2) {
+            // 20% chance: give 1 or 2 points to other students
+            const pointsToGive = Math.random() < 0.5 ? 1 : 2;
+            randomPoints = -pointsToGive; // Negative for giving away
+            originalPoints = randomPoints;
+            
+            // Find other students to give points to
+            const otherStudents = Array.from(students.values())
+                .filter(s => s.username !== student.username && s.score > 0);
+            
+            if (otherStudents.length > 0) {
+                // Randomly select one or more students to give points to
+                const numRecipients = Math.min(Math.floor(Math.random() * 3) + 1, otherStudents.length);
+                const shuffled = otherStudents.sort(() => 0.5 - Math.random());
+                const recipients = shuffled.slice(0, numRecipients);
+                
+                const pointsPerRecipient = Math.floor(pointsToGive / recipients.length);
+                const remainder = pointsToGive % recipients.length;
+                
+                recipients.forEach((recipient, index) => {
+                    const pointsToReceive = pointsPerRecipient + (index < remainder ? 1 : 0);
+                    if (pointsToReceive > 0) {
+                        // Find the recipient's socket ID and update their score
+                        for (let [socketId, s] of students) {
+                            if (s.username === recipient.username) {
+                                s.score += pointsToReceive;
+                                students.set(socketId, s);
+                                break;
+                            }
+                        }
+                    }
+                });
+                
+                const recipientNames = recipients.map(r => r.name).join(', ');
+                io.emit('activity_update', {
+                    type: 'risky',
+                    message: `🎁 ${student.name} gave ${pointsToGive} points to ${recipientNames}!`
+                });
+            } else {
+                // No other students to give points to, just lose points
+                io.emit('activity_update', {
+                    type: 'risky',
+                    message: `😬 ${student.name} lost ${Math.abs(randomPoints)} points (no one to give to)`
+                });
+            }
+        } else {
+            // 80% chance: random 0, 1, 3, 4, 5 points
+            const possiblePoints = [0, 1, 3, 4, 5];
+            randomPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)];
+            originalPoints = randomPoints;
+            
+            if (student.doubleNext && randomPoints > 0) {
+                randomPoints *= 2;
+                student.doubleNext = false;
+                io.emit('activity_update', {
+                    type: 'powerup',
+                    message: `⚡ ${student.name} used Double Power on risky roll!`
+                });
+            }
+            
+            if (randomPoints < 0 && student.shielded) {
+                io.emit('activity_update', {
+                    type: 'shield',
+                    message: `🛡️ ${student.name}'s shield blocked ${randomPoints} damage!`
+                });
+                randomPoints = 0;
+            }
+            
+            // Activity message
+            const emoji = randomPoints > 0 ? '🎉' : randomPoints < 0 ? '😬' : '😐';
+            const verb = randomPoints > 0 ? 'gained' : randomPoints < 0 ? 'lost' : 'got';
             io.emit('activity_update', {
-                type: 'powerup',
-                message: `⚡ ${student.name} used Double Power on risky roll!`
+                type: 'risky',
+                message: `${emoji} ${student.name} risked it and ${verb} ${Math.abs(randomPoints)} points!`
             });
-        }
-        
-        if (randomPoints < 0 && student.shielded) {
-            io.emit('activity_update', {
-                type: 'shield',
-                message: `🛡️ ${student.name}'s shield blocked ${randomPoints} damage!`
-            });
-            randomPoints = 0;
         }
         
         student.score = Math.max(0, student.score + randomPoints);
         student.interactions += 1;
         student.credits = (student.credits || 0) + 2;
-        
-        // Activity message
-        const emoji = randomPoints > 0 ? '🎉' : randomPoints < 0 ? '😬' : '😐';
-        const verb = randomPoints > 0 ? 'gained' : randomPoints < 0 ? 'lost' : 'got';
-        io.emit('activity_update', {
-            type: 'risky',
-            message: `${emoji} ${student.name} risked it and ${verb} ${Math.abs(randomPoints)} points!`
-        });
         
         if (student.shielded && student.shieldDuration > 0) {
             student.shieldDuration--;
@@ -171,12 +279,14 @@ io.on('connection', (socket) => {
     if (!student || !gameActive) return;
     
     // Find all students with points > 0, excluding the requester
+    // NOW INCLUDES shielded players since shields can be broken
     const targets = Array.from(students.values())
-      .filter(s => s.score > 0 && s.username !== student.username && !s.shielded)
+      .filter(s => s.score > 0 && s.username !== student.username)
       .map(s => ({
         username: s.username,
         name: s.name,
-        score: s.score
+        score: s.score,
+        shielded: s.shielded || false
       }));
     
     console.log(`${student.name} requested steal targets. Found: ${targets.length}`);
@@ -189,7 +299,7 @@ io.on('connection', (socket) => {
     if (!student || !gameActive) return;
     
     const { targetUsername } = data;
-    const cost = 8;
+    const cost = 6;
     
     if (student.credits < cost) {
       socket.emit('powerup_failed', 'Not enough credits!');
@@ -218,13 +328,39 @@ io.on('connection', (socket) => {
       return;
     }
     
+    // NEW SHIELD LOGIC: If target has shield, break it but steal no points
     if (target.shielded) {
-      socket.emit('powerup_failed', `${target.name} is protected by a shield!`);
+      // Break the shield
+      target.shielded = false;
+      target.shieldDuration = 0;
+      
+      // Thief still pays credits but gets no points
+      student.credits -= cost;
+      
+      // Update both students
+      students.set(targetSocketId, target);
+      students.set(socket.id, student);
+      
+      console.log(`${student.name} broke ${target.name}'s shield`);
+      
+      // Broadcast shield break activity
+      io.emit('activity_update', {
+        type: 'shield',
+        message: `💥 ${student.name} broke ${target.name}'s shield! No points stolen.`
+      });
+      
+      socket.emit('powerup_bought', {
+        powerup: 'shield_break',
+        effect: `Broke ${target.name}'s shield (no points stolen)`,
+        creditsLeft: student.credits
+      });
+      
+      broadcastUpdate();
       return;
     }
     
-    // Perform the theft
-    const stolenPoints = Math.min(2, target.score); // Steal up to 2 points
+    // Normal theft (no shield)
+    const stolenPoints = Math.min(Math.floor(Math.random() * 3) + 3, target.score); // Steal 3, 4, or 5 points
     target.score -= stolenPoints;
     student.score += stolenPoints;
     student.credits -= cost;
@@ -282,7 +418,7 @@ io.on('connection', (socket) => {
         break;
         
       case 'shield':
-        cost = 10;
+        cost = 5;
         if (student.credits >= cost) {
           student.credits -= cost;
           student.shielded = true;
@@ -441,6 +577,9 @@ io.on('connection', (socket) => {
       const student = students.get(socket.id);
       console.log('Student disconnected:', student.name);
       
+      // Release the avatar
+      releaseAvatar(student.avatar);
+      
       io.emit('activity_update', {
         type: 'system',
         message: `👋 ${student.name} left the game`
@@ -461,6 +600,11 @@ io.on('connection', (socket) => {
       teachers.delete(socket.id);
     }
   });
+  
+  // Send used avatars to new connections
+  socket.on('request_used_avatars', () => {
+    socket.emit('used_avatars', Array.from(usedAvatars));
+  });
 });
 
 function broadcastUpdate() {
@@ -474,6 +618,8 @@ function broadcastUpdate() {
       ...student,
       rank: index + 1
     }));
+  
+  console.log('🎯 DEBUG - Broadcasting students with avatars:', sortedStudents.map(s => ({ name: s.name, avatar: s.avatar })));
   
   io.emit('update', {
     students: sortedStudents,
