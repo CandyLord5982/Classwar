@@ -11,12 +11,19 @@ const io = socketIo(server);
 // Simple credentials with default avatars
 const ACCOUNTS = {
   teachers: {
-    "teacher123": { password: "teach2024", name: "Teacher", avatar: "https://i.pravatar.cc/150?img=50" }
+    "teacher123": { password: "Coldplay5982@", name: "Teacher", avatar: "https://i.pravatar.cc/150?img=50" }
   },
   students: {
-    "student1": { password: "pass1", name: "Alice Johnson", avatar: "https://i.pravatar.cc/150?img=1" },
-    "student2": { password: "pass2", name: "Bob Wilson", avatar: "https://i.pravatar.cc/150?img=2" },
-    "student3": { password: "pass3", name: "Carol Davis", avatar: "https://i.pravatar.cc/150?img=3" }
+    "nkhanh": { password: "pass1", name: "Nam Khanh", avatar: "https://i.pravatar.cc/150?img=1" },
+    "haianh": { password: "pass1", name: "Hai Anh", avatar: "https://i.pravatar.cc/150?img=2" },
+    "ducluong": { password: "pass1", name: "Duc Luong", avatar: "https://i.pravatar.cc/150?img=3" },
+     "quocminh": { password: "pass1", name: "Quoc Minh", avatar: "https://i.pravatar.cc/150?img=2" },
+     "duongkhoi": { password: "pass1", name: "Duong Khoi", avatar: "https://i.pravatar.cc/150?img=2" },
+     "thungoc": { password: "pass1", name: "Thu Ngoc", avatar: "https://i.pravatar.cc/150?img=2" },
+     "qhuy": { password: "pass1", name: "Huy", avatar: "https://i.pravatar.cc/150?img=2" },
+     "baolong": { password: "pass1", name: "Bao Long", avatar: "https://i.pravatar.cc/150?img=2" },
+     "khoiphan": { password: "pass1", name: "Phan Khoi", avatar: "https://i.pravatar.cc/150?img=2" },
+     "baongoc": { password: "pass1", name: "Bao Ngoc", avatar: "https://i.pravatar.cc/150?img=2" },
   }
 };
 
